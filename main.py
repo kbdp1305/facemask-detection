@@ -10,11 +10,14 @@ from sklearn.svm import SVC
 import cv2
 import mahotas
 import pickle
+import cv2
+
 
 def get_image(name, folder):
     filepath = os.path.join(folder, name)
     img = Image.open(filepath)
     return np.array(img)
+
 
 def get_images(directoryName):
     directory = os.fsencode(directoryName)
@@ -28,6 +31,7 @@ def get_images(directoryName):
         else:
             continue
     return images
+
 
 def fd_hu_moments(image):
     # Compute the Hu Moments of the image as a feature
@@ -48,8 +52,10 @@ def fd_histogram(image):
     hist = hist.flatten()
     return hist
 
+
 def getFeatures(image):
     return np.hstack([fd_histogram(image), fd_haralick(image), fd_hu_moments(image)])
+
 
 if __name__ == '__main__':
     # Get features for the training images with masks
@@ -113,6 +119,7 @@ if __name__ == '__main__':
     for image in nomask_images_test:
         nomask_features_test.append(getFeatures(image))
 
+    print(nomask_features_test)
     scaler = MinMaxScaler(feature_range=(0, 1))
     # Normalize The feature vectors...
     nomask_features_test = scaler.fit_transform(nomask_features_test)
@@ -120,7 +127,8 @@ if __name__ == '__main__':
     with open('nomask_features_test.pkl', 'wb') as f:
         pickle.dump(nomask_features_test, f)
 
-    print("Testing No Mask Features has shape:", np.shape(nomask_features_test))
+    print("Testing No Mask Features has shape:",
+          np.shape(nomask_features_test))
 
     # Read feature data from file
     # with open('mask_features.pkl', 'rb') as f:
@@ -159,3 +167,66 @@ if __name__ == '__main__':
     # Calculate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print('Model accuracy is: ', accuracy)
+
+    # It helps in identifying the faces
+    import cv2
+    import sys
+    import numpy
+    import os
+    size = 4
+    haar_file = 'haarcascade_frontalface_default.xml'
+    datasets = 'datasets'
+
+    # Part 1: Create fisherRecognizer
+    print('Recognizing Face Please Be in sufficient Lights...')
+
+    # Create a list of images and a list of corresponding names
+    # (images, labels, names, id) = ([], [], {}, 0)
+    # for (subdirs, dirs, files) in os.walk(datasets):
+    #     for subdir in dirs:
+    #         names[id] = subdir
+    #         subjectpath = os.path.join(datasets, subdir)
+    #         for filename in os.listdir(subjectpath):
+    #             path = subjectpath + '/' + filename
+    #             label = id
+    #             images.append(cv2.imread(path, 0))
+    #             labels.append(int(label))
+    #         id += 1
+    (width, height) = (130, 100)
+
+    # # Create a Numpy array from the two lists above
+    # (images, labels) = [numpy.array(lis) for lis in [images, labels]]
+
+    # # OpenCV trains a model from the images
+    # # NOTE FOR OpenCV2: remove '.face'
+    # model = cv2.face.LBPHFaceRecognizer_create()
+    # model.train(images, labels)
+
+    # Part 2: Use fisherRecognizer on camera stream
+    face_cascade = cv2.CascadeClassifier(haar_file)
+    webcam = cv2.VideoCapture(0)
+    while True:
+        (_, im) = webcam.read()
+        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        for (x, y, w, h) in faces:
+            cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            face = gray[y:y + h, x:x + w]
+            face_resize = cv2.resize(face, (width, height))
+
+            input_feature = np.array(getFeatures(
+                face_resize))
+            input_features = np.array(input_feature)
+            scaler = MinMaxScaler(feature_range=(0, 1))
+            input_features = scaler.fit_transform(input_features.reshape(1, -1))
+            print(input_features)
+            y_pred = svm.predict(input_features)
+            # Try to recognize the face
+            # prediction = svm.predict(face_resize)
+            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 3)
+
+            cv2.imshow('OpenCV', im)
+
+            key = cv2.waitKey(10)
+            if key == 27:
+                break
