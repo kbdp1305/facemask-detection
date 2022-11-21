@@ -47,7 +47,17 @@ def fd_haralick(image):
 
 def fd_histogram(image):
     # Compute the histogram of the image as a feature
-    hist = cv2.calcHist([image], [0], None, [256], [0, 256])
+    def histogram(image) :
+        height = [0]*256
+        for x in range(image.shape[0]):
+            for y in range(image.shape[1]):
+                i = image[x,y]
+                height[i] = height[i]+1
+        intensity = np.arange(o,256,1)
+        return intensity,height
+    
+    hist = histogram(image)
+    #hist = cv2.calcHist([image], [0], None, [256], [0, 256])
     cv2.normalize(hist, hist)
     hist = hist.flatten()
     return hist
