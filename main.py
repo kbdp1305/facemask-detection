@@ -13,6 +13,8 @@ import pickle
 import cv2
 
 
+
+
 def get_image(name, folder):
     filepath = os.path.join(folder, name)
     img = Image.open(filepath)
@@ -31,6 +33,19 @@ def get_images(directoryName):
         else:
             continue
     return images
+
+
+def thresholding(image) :
+    threshold=140
+    images=image.copy()
+    for i in range(image.shape[0]) :
+        for j in range(image.shape[1]) :
+            if image[i][j]<threshold :
+                images[i][j]=0
+            else :
+                images[i][j]=255
+    return images
+
 
 
 def fd_hu_moments(image):
