@@ -32,6 +32,75 @@ def get_images(directoryName):
             continue
     return images
 
+def thresholding(image) :
+    threshold=140
+    images=image.copy()
+    for i in range(image.shape[0]) :
+        for j in range(image.shape[1]) :
+            if image[i][j]<threshold :
+                images[i][j]=0
+            else :
+                images[i][j]=1
+    return images
+
+def lambda_moments(function,y,z) :
+    function2=function(y,z)
+    return function2
+
+
+def moments_image(image) :
+    images=image.copy()
+    
+    
+    lamda=0
+    temp=[]
+    myu=np.array([[0]*10]*10,dtype='float64')
+    scale=[]
+    for k in range(0,4) :
+        for s in range(0,4) :
+            if (s==3 and k>0) or (k==3 and s>0) or(s==2 and k==2) :
+                pass
+            else :
+                lamda=0
+                dividing=0
+                function=lambda y,z : pow(y,k)*pow(z,s)*image[i][j]
+                for i in range(image.shape[0]) :
+                    for j in range(image.shape[1]) :
+                            lamda+=lambda_moments(function,i+1,j+1) 
+                           
+                temp.append(lamda)
+                print("M"+str(k)+str(s)+" : "+str(lamda))
+    x_center=temp[4]/temp[0]
+    y_center=temp[1]/temp[0]
+    myu_00=temp[0]
+    myu[0][0]=myu_00
+    myu_01=0
+    myu_10=0
+    myu_11=temp[5]-x_center*temp[1]
+    if myu_11<0 :
+        myu_11=0
+    myu[1][1]=myu_11
+    myu_20=temp[7]-x_center*temp[4]
+    myu_02=temp[2]-y_center*temp[1]
+    myu[2][0]=myu_20
+    myu[0][2]=myu_02
+    myu_21=temp[8]-(2*x_center*temp[5])-(y_center*temp[7])+(2*pow(x_center,2)*temp[1])
+    myu_12 = temp[6]-2*y_center*temp[5]-x_center*temp[2]+2*pow(y_center,2)*temp[4]
+    myu[2][1]=myu_21
+    myu[1][2]=myu_12
+    myu_30=temp[9]-3*x_center*temp[7]+2*pow(x_center,2)*temp[4]
+    myu_03= (temp[3])-(3*y_center*temp[2])+(2*pow(y_center,2)*temp[1])
+    myu[3][0]=myu_30
+    myu[0][3]=myu_03
+    ## Scaling Invariant
+    function_scale = lambda p,r: (myu[p][r])/(pow(myu_00,(1+((p+r)/2))))
+    for i in range(0,4) :
+        for j in range(0,4) :
+            if (i==0 and j ==2) or (i==2 and j==0) or (i==2 and j==1) or (i==1 and j == 2) or(i==0 and j == 3) or (i==1 and j ==1) or (i==3 and j == 0) :
+                
+                scale.append(np.array(function_scale(i,j),dtype='float64'))
+    return scale
+                
 
 def fd_hu_moments(image):
     # Compute the Hu Moments of the image as a feature
