@@ -53,6 +53,33 @@ def fd_histogram(image):
     return hist
 
 
+def konvolusi(input_img, kernel):
+  output = np.zeros(input_img.shape)
+  padding = np.pad(input_img, pad_width=1, mode='constant', constant_values=0)
+  for i in range(input_img.shape[0]):
+    for j in range(input_img.shape[1]):
+      for k in range(kernel.shape[0]):
+        for l in range(kernel.shape[1]):
+          output[i][j] = output[i][j] + kernel[k][l]*padding[i+k][j+l]
+  return output
+
+
+def sharpen(image) :
+  image = np.zeros(image.shape);
+  kernel = np.array([[0, -1, 0],
+                    [-1, 5, -1],
+                    [0, -1, 0]])
+  output = konvolusi(image, kernel)
+  return output
+
+def smooth(image) :
+ image = np.zeros(image.shape);
+ kernel = (1/9)np.array([[1, 1, 1],
+                   [1, 1, 1],
+                   [1, 1, 1]])
+  output = konvolusi(image, kernel)
+  return output
+
 def getFeatures(image):
     return np.hstack([fd_histogram(image), fd_haralick(image), fd_hu_moments(image)])
 
